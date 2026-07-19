@@ -1,0 +1,75 @@
+using System.Buffers;
+using System.Collections.Concurrent;
+using System.Drawing;
+using Core.Network;
+using MemoryPack;
+using Shared;
+using Shared.Protocol;
+
+namespace TestClient;
+
+public class ClientSession : PacketSession
+{
+	public int MyUid { get; private set; }
+	public ConcurrentDictionary<int, PointF> Players { get; } = new();
+
+	protected override void OnConnected()
+	{
+	}
+
+	protected override void OnDisconnected()
+	{
+	}
+
+	public void SendLogin(string name)
+	{
+		SendPacket(MemoryPackSerializer.Serialize<Packet>(new LoginReq { Name = name }));
+	}
+
+	public void SendEnterZone()
+	{
+		SendPacket(MemoryPackSerializer.Serialize<Packet>(new EnterZoneReq()));
+	}
+
+	public void SendMove(MoveFlag flags)
+	{
+		SendPacket(MemoryPackSerializer.Serialize<Packet>(new MoveReq { Flags = flags }));
+	}
+
+	public override void OnMessage(ReadOnlySequence<byte> payload)
+	{
+		Packet? packet = MemoryPackSerializer.Deserialize<Packet>(payload);
+
+		switch (packet)
+		{
+			case LoginRes loginRes:
+				if (loginRes.ErrorCode == ErrorCode.OK)
+				{
+					MyUid = loginRes.id;
+				}
+				break;
+
+			case EnterZoneRes enterRes:
+				Players[MyUid] = new PointF(enterRes.X, enterRes.Y);
+				break;
+
+			case EnterZoneNtf enterNtf:
+				foreach (PlayerInfo p in enterNtf.Players)
+				{
+					Players[p.Uid] = new PointF(p.X, p.Y);
+				}
+				break;
+
+			case LeaveZoneNtf leaveNtf:
+				Players.TryRemove(leaveNtf.Uid, out _);
+				break;
+
+			case MoveNtf moveNtf:
+				foreach (MoveInfo m in moveNtf.Moves)
+				{
+					Players[m.Uid] = new PointF(m.X, m.Y);
+				}
+				break;
+		}
+	}
+}
