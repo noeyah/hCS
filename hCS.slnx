@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="Core/Core.csproj" />
+  <Project Path="Shared/Shared.csproj" />
+  <Project Path="TestClient/TestClient.csproj" />
+  <Project Path="TestDummy/TestDummy.csproj" />
+  <Project Path="TestServer/TestServer.csproj" />
+</Solution>
