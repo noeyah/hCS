@@ -61,7 +61,10 @@ public class ClientSession : PacketSession
 				break;
 
 			case LeaveZoneNtf leaveNtf:
-				Players.TryRemove(leaveNtf.Uid, out _);
+				foreach (int uid in leaveNtf.Uids)
+				{
+					Players.TryRemove(uid, out _);
+				}
 				break;
 
 			case MoveNtf moveNtf:

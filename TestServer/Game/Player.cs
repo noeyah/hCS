@@ -13,6 +13,8 @@ public class Player
 
 	public MoveFlag Move { get; set; }
 
+	public int CellIndex { get; set; } = -1;
+
 	public ISender Session { get; }
 
 	public Player(int uid, string name, ISender session)

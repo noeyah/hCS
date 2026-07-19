@@ -6,9 +6,11 @@ namespace TestClient;
 public class GameForm : Form
 {
 	private const float MapMax = 100f;
+	private const float CellSize = 10f;
 
 	private readonly ClientSession _session;
 	private readonly System.Windows.Forms.Timer _timer;
+	private readonly Pen _cellPen;
 
 	private bool _up;
 	private bool _down;
@@ -26,9 +28,25 @@ public class GameForm : Form
 		KeyPreview = true;
 		BackColor = Color.FromArgb(30, 30, 30);
 
+		_cellPen = new Pen(Color.FromArgb(70, 70, 70))
+		{
+			DashStyle = DashStyle.Dash,
+		};
+
 		_timer = new System.Windows.Forms.Timer { Interval = 33 };
 		_timer.Tick += (_, _) => Invalidate();
 		_timer.Start();
+	}
+
+	protected override void Dispose(bool disposing)
+	{
+		if (disposing)
+		{
+			_timer.Dispose();
+			_cellPen.Dispose();
+		}
+
+		base.Dispose(disposing);
 	}
 
 	protected override void OnKeyDown(KeyEventArgs e)
@@ -101,6 +119,18 @@ public class GameForm : Form
 		}
 	}
 
+	private void DrawCells(Graphics g, int ox, int oy, int size)
+	{
+		int count = (int)MathF.Ceiling(MapMax / CellSize);
+
+		for (int i = 1; i < count; i++)
+		{
+			float offset = i * CellSize / MapMax * size;
+			g.DrawLine(_cellPen, ox + offset, oy, ox + offset, oy + size);
+			g.DrawLine(_cellPen, ox, oy + offset, ox + size, oy + offset);
+		}
+	}
+
 	protected override void OnPaint(PaintEventArgs e)
 	{
 		base.OnPaint(e);
@@ -112,6 +142,7 @@ public class GameForm : Form
 		int ox = 20;
 		int oy = 20;
 
+		DrawCells(g, ox, oy, size);
 		g.DrawRectangle(Pens.Gray, ox, oy, size, size);
 
 		foreach (KeyValuePair<int, PointF> kv in _session.Players)

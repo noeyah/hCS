@@ -23,7 +23,7 @@ public partial class EnterZoneNtf : Packet
 [MemoryPackable]
 public partial class LeaveZoneNtf : Packet
 {
-	public int Uid { get; set; }
+	public int[] Uids { get; set; } = [];
 }
 
 [MemoryPackable]
