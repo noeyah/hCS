@@ -1,4 +1,4 @@
-using System.Buffers;
+﻿using System.Buffers;
 using System.Collections.Concurrent;
 using System.Drawing;
 using Core.Network;
@@ -23,17 +23,17 @@ public class ClientSession : PacketSession
 
 	public void SendLogin(string name)
 	{
-		SendPacket(MemoryPackSerializer.Serialize<Packet>(new LoginReq { Name = name }));
+		SendBody(MemoryPackSerializer.Serialize<Packet>(new LoginReq { Name = name }));
 	}
 
 	public void SendEnterZone()
 	{
-		SendPacket(MemoryPackSerializer.Serialize<Packet>(new EnterZoneReq()));
+		SendBody(MemoryPackSerializer.Serialize<Packet>(new EnterZoneReq()));
 	}
 
 	public void SendMove(MoveFlag flags)
 	{
-		SendPacket(MemoryPackSerializer.Serialize<Packet>(new MoveReq { Flags = flags }));
+		SendBody(MemoryPackSerializer.Serialize<Packet>(new MoveReq { Flags = flags }));
 	}
 
 	public override void OnMessage(ReadOnlySequence<byte> payload)

@@ -1,4 +1,4 @@
-using System.Buffers;
+﻿using System.Buffers;
 using System.Buffers.Binary;
 
 namespace Core.Network;
@@ -47,15 +47,21 @@ public abstract class PacketSession : Session, ISender
 		return totalRecvSize;
 	}
 
-	public void SendPacket(ReadOnlySpan<byte> body)
+	public static ReadOnlyMemory<byte> MakePacket(ReadOnlySpan<byte> body)
 	{
-		// TODO. 매번 할당??? 수정 필요
-		// 패킷 사이즈 체크 필요
 		byte[] buffer = new byte[HeaderSize + body.Length];
 		BinaryPrimitives.WriteUInt16LittleEndian(buffer, (ushort)body.Length);
 		body.CopyTo(buffer.AsSpan(HeaderSize));
-
-		Send(buffer);
+		return buffer;
 	}
 
+	public void SendBody(ReadOnlySpan<byte> body)
+	{
+		Send(MakePacket(body));
+	}
+
+	public void SendPacket(ReadOnlyMemory<byte> packet)
+	{
+		Send(packet);
+	}
 }

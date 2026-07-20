@@ -2,5 +2,5 @@
 
 public interface ISender
 {
-	public void SendPacket(ReadOnlySpan<byte> body);
+	public void SendPacket(ReadOnlyMemory<byte> packet);
 }

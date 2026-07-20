@@ -30,11 +30,6 @@ public abstract class Session
 		_ = RunAsync();
 	}
 
-	public void Send(ReadOnlyMemory<byte> data)
-	{
-		_sendChannel.Writer.TryWrite(data);
-	}
-
 	public void Disconnect()
 	{
 		if (Interlocked.Exchange(ref _disconnected, 1) == 1)
@@ -54,6 +49,11 @@ public abstract class Session
 		}
 
 		_socket.Close();
+	}
+
+	protected void Send(ReadOnlyMemory<byte> data)
+	{
+		_sendChannel.Writer.TryWrite(data);
 	}
 
 	private async Task RunAsync()

@@ -1,4 +1,4 @@
-using System.Buffers;
+﻿using System.Buffers;
 using System.Diagnostics;
 using Core.Network;
 using MemoryPack;
@@ -35,20 +35,20 @@ public class DummySession : PacketSession
 	{
 		var req = new LoginReq { Name = name };
 		byte[] bytes = MemoryPackSerializer.Serialize<Packet>(req);
-		SendPacket(bytes);
+		SendBody(bytes);
 	}
 
 	public void SendEnterZone()
 	{
 		var req = new EnterZoneReq();
 		byte[] bytes = MemoryPackSerializer.Serialize<Packet>(req);
-		SendPacket(bytes);
+		SendBody(bytes);
 	}
 
 	public void SendRandomMove(Random rng)
 	{
 		var req = new MoveReq { Flags = s_dirs[rng.Next(s_dirs.Length)] };
-		SendPacket(MemoryPackSerializer.Serialize<Packet>(req));
+		SendBody(MemoryPackSerializer.Serialize<Packet>(req));
 	}
 
 	public void SendPing()
@@ -56,7 +56,7 @@ public class DummySession : PacketSession
 		var ping = new Ping { Tick = Stopwatch.GetTimestamp() };
 
 		byte[] bytes = MemoryPackSerializer.Serialize<Packet>(ping);
-		SendPacket(bytes);
+		SendBody(bytes);
 	}
 
 	public override void OnMessage(ReadOnlySequence<byte> payload)

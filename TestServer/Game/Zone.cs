@@ -1,4 +1,4 @@
-using Core.Network;
+﻿using Core.Network;
 using MemoryPack;
 using Shared;
 using Shared.Protocol;
@@ -160,22 +160,22 @@ public class Zone
 	private void Unicast(ISender sender, Packet packet)
 	{
 		byte[] bytes = MemoryPackSerializer.Serialize<Packet>(packet);
-		Unicast(sender, bytes);
+		Unicast(sender, PacketSession.MakePacket(bytes));
 	}
 
-	private void Unicast(ISender sender, byte[] bytes)
+	private void Unicast(ISender sender, ReadOnlyMemory<byte> packet)
 	{
-		sender.SendPacket(bytes);
-		_metrics.OnSent(bytes.Length);
+		sender.SendPacket(packet);
+		_metrics.OnSent(packet.Length);
 	}
 
 	private void Broadcast(Packet packet, int exceptUid = 0)
 	{
 		byte[] bytes = MemoryPackSerializer.Serialize<Packet>(packet);
-		Broadcast(bytes, exceptUid);
+		Broadcast(PacketSession.MakePacket(bytes), exceptUid);
 	}
 
-	private void Broadcast(byte[] bytes, int exceptUid = 0)
+	private void Broadcast(ReadOnlyMemory<byte> packet, int exceptUid = 0)
 	{
 		foreach (Player p in _players.Values)
 		{
@@ -184,17 +184,17 @@ public class Zone
 				continue;
 			}
 
-			Unicast(p.Session, bytes);
+			Unicast(p.Session, packet);
 		}
 	}
 
 	private void BroadcastToNeighbor(int cellIndex, Packet packet, int exceptUid = 0)
 	{
 		byte[] bytes = MemoryPackSerializer.Serialize<Packet>(packet);
-		BroadcastToNeighbor(cellIndex, bytes, exceptUid);
+		BroadcastToNeighbor(cellIndex, PacketSession.MakePacket(bytes), exceptUid);
 	}
 
-	private void BroadcastToNeighbor(int cellIndex, byte[] bytes, int exceptUid = 0)
+	private void BroadcastToNeighbor(int cellIndex, ReadOnlyMemory<byte> packet, int exceptUid = 0)
 	{
 		_grid.CollectNeighborPlayers(cellIndex, _bcTmp);
 
@@ -205,7 +205,7 @@ public class Zone
 				continue;
 			}
 
-			Unicast(p.Session, bytes);
+			Unicast(p.Session, packet);
 		}
 	}
 
@@ -380,10 +380,11 @@ public class Zone
 		Unicast(mover.Session, new EnterZoneNtf { Players = infos });
 
 		var moverNtf = new EnterZoneNtf { Players = [ToInfo(mover)] };
-		byte[] bytes = MemoryPackSerializer.Serialize<Packet>(moverNtf);
+		var bytes = MemoryPackSerializer.Serialize<Packet>(moverNtf);
+		var packet = PacketSession.MakePacket(bytes);
 		foreach (Player p in others)
 		{
-			Unicast(p.Session, bytes);
+			Unicast(p.Session, packet);
 		}
 	}
 
@@ -403,10 +404,11 @@ public class Zone
 		Unicast(mover.Session, new LeaveZoneNtf { Uids = uids });
 
 		var moverNtf = new LeaveZoneNtf { Uids = [mover.Uid] };
-		byte[] bytes = MemoryPackSerializer.Serialize<Packet>(moverNtf);
+		var bytes = MemoryPackSerializer.Serialize<Packet>(moverNtf);
+		var packet = PacketSession.MakePacket(bytes);
 		foreach (Player p in others)
 		{
-			Unicast(p.Session, bytes);
+			Unicast(p.Session, packet);
 		}
 	}
 }

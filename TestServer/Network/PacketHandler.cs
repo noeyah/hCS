@@ -1,4 +1,4 @@
-using MemoryPack;
+ï»¿using MemoryPack;
 using Shared;
 using Shared.Protocol;
 
@@ -97,7 +97,7 @@ public static class PacketHandler
 			return;
 		}
 
-		// Áı¾î³ÖÀ» Á¸
+		// ì§‘ì–´ë„£ì„ ì¡´
 		Zone zone = session.World.PickZone(session.Uid);
 		if (!session.EnterZone(zone))
 		{
@@ -115,6 +115,6 @@ public static class PacketHandler
 	private static void Send(GameSession session, Packet packet)
 	{
 		byte[] bytes = MemoryPackSerializer.Serialize<Packet>(packet);
-		session.SendPacket(bytes);
+		session.SendBody(bytes);
 	}
 }
