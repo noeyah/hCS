@@ -1,4 +1,4 @@
-using Core.Network;
+﻿using Core.Network;
 using Shared;
 
 namespace TestServer;

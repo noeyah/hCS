@@ -1,4 +1,4 @@
-namespace TestDummy;
+﻿namespace TestDummy;
 
 public static class Metrics
 {
