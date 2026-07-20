@@ -5,9 +5,6 @@ namespace TestClient;
 
 public class GameForm : Form
 {
-	private const float MapMax = 100f;
-	private const float CellSize = 10f;
-
 	private readonly ClientSession _session;
 	private readonly System.Windows.Forms.Timer _timer;
 	private readonly Pen _cellPen;
@@ -121,11 +118,11 @@ public class GameForm : Form
 
 	private void DrawCells(Graphics g, int ox, int oy, int size)
 	{
-		int count = (int)MathF.Ceiling(MapMax / CellSize);
+		int count = (int)MathF.Ceiling(MapConst.Max / MapConst.CellSize);
 
 		for (int i = 1; i < count; i++)
 		{
-			float offset = i * CellSize / MapMax * size;
+			float offset = i * MapConst.CellSize / MapConst.Max * size;
 			g.DrawLine(_cellPen, ox + offset, oy, ox + offset, oy + size);
 			g.DrawLine(_cellPen, ox, oy + offset, ox + size, oy + offset);
 		}
@@ -148,8 +145,8 @@ public class GameForm : Form
 		foreach (KeyValuePair<int, PointF> kv in _session.Players)
 		{
 			PointF p = kv.Value;
-			float sx = ox + p.X / MapMax * size;
-			float sy = oy + (MapMax - p.Y) / MapMax * size;
+			float sx = ox + p.X / MapConst.Max * size;
+			float sy = oy + (MapConst.Max - p.Y) / MapConst.Max * size;
 
 			bool me = kv.Key == _session.MyUid;
 			Brush brush = me ? Brushes.OrangeRed : Brushes.DeepSkyBlue;

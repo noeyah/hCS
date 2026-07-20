@@ -22,22 +22,17 @@ public class Zone
 	private readonly List<MoveInfo>[] _cellMoves;
 	private readonly HashSet<int> _dirtyCells = new();
 	private readonly List<(Player p, int oldCellIdx)> _transitions = new();
-	private readonly List<Player> _enterTmp;
-	private readonly List<Player> _leaveTmp;
 
 	// 할당해놓고 임의 데이터 넣어서 계속 씀
 	private readonly List<Player> _spawnTmp;
 	private readonly List<Player> _bcTmp;
-
-	private const float Speed = 5f;
-	private const float MapMin = 0f;
-	private const float MapMax = 100f;
-	private const float CellSize = 10f;
+	private readonly List<Player> _enterTmp;
+	private readonly List<Player> _leaveTmp;
 
 	public Zone(int tickHz = 20)
 	{
 		_tickHz = tickHz;
-		_grid = new ZoneGrid(MapMax, CellSize);
+		_grid = new ZoneGrid(MapConst.Max, MapConst.CellSize);
 		_metrics = new ZoneMetrics(tickHz);
 		_thread = new Thread(Run)
 		{
@@ -104,8 +99,8 @@ public class Zone
 
 		var player = new Player(uid, name, session)
 		{
-			X = Random.Shared.NextSingle() * MapMax,
-			Y = Random.Shared.NextSingle() * MapMax,
+			X = Random.Shared.NextSingle() * MapConst.Max,
+			Y = Random.Shared.NextSingle() * MapConst.Max,
 		};
 
 		enterRes.ErrorCode = ErrorCode.OK;
@@ -305,8 +300,8 @@ public class Zone
 			}
 
 			(float dx, float dy) = ToDir(p.Move);
-			p.X = Math.Clamp(p.X + dx * Speed * dt, MapMin, MapMax);
-			p.Y = Math.Clamp(p.Y + dy * Speed * dt, MapMin, MapMax);
+			p.X = Math.Clamp(p.X + dx * MapConst.Speed * dt, MapConst.Min, MapConst.Max);
+			p.Y = Math.Clamp(p.Y + dy * MapConst.Speed * dt, MapConst.Min, MapConst.Max);
 
 			if (_grid.TryUpdateCell(p, out var oldCellIndex))
 			{
