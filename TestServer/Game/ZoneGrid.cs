@@ -82,9 +82,9 @@ public class ZoneGrid
 		player.CellIndex = -1;
 	}
 
-	public bool TryUpdateCell(Player player, out int oldCellIndex)
+	public bool TryUpdateCell(Player player)
 	{
-		oldCellIndex = player.CellIndex;
+		int oldCellIndex = player.CellIndex;
 
 		int newIndex = ToIndex(player.X, player.Y);
 		if (newIndex == oldCellIndex)

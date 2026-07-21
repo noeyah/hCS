@@ -15,6 +15,8 @@ public class Player
 
 	public int CellIndex { get; set; } = -1;
 
+	public HashSet<int> View { get; } = new();
+
 	public ISender Session { get; }
 
 	public Player(int uid, string name, ISender session)

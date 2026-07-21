@@ -40,13 +40,15 @@ public class Zone
 	// update에서 사용
 	private readonly List<MoveInfo>[] _cellMoves;
 	private readonly HashSet<int> _dirtyCells = new();
-	private readonly List<(Player p, int oldCellIdx)> _transitions = new();
+	private readonly List<Player> _transitions = new();
 
 	// 할당해놓고 임의 데이터 넣어서 계속 씀
 	private readonly List<Player> _spawnTmp;
 	private readonly List<Player> _bcTmp;
 	private readonly List<Player> _enterTmp;
 	private readonly List<Player> _leaveTmp;
+	private readonly List<Player> _viewTmp;
+	private readonly HashSet<int> _viewUids = new();
 
 	public Zone(int tickHz = 20)
 	{
@@ -69,6 +71,7 @@ public class Zone
 		_bcTmp = new List<Player>(200);
 		_enterTmp = new List<Player>(200);
 		_leaveTmp = new List<Player>(200);
+		_viewTmp = new List<Player>(200);
 	}
 
 	public void Start()
@@ -151,6 +154,8 @@ public class Zone
 			foreach (Player p in _spawnTmp)
 			{
 				infos[i++] = ToInfo(p);
+				player.View.Add(p.Uid);
+				p.View.Add(player.Uid);
 			}
 
 			var listNtf = new EnterZoneNtf { Players = infos };
@@ -175,13 +180,22 @@ public class Zone
 			return;
 		}
 
-		int cellIndex = player.CellIndex;
-
 		_players.Remove(uid);
 		_grid.Remove(player);
 
-		var leave = new LeaveZoneNtf { Uids = [uid] };
-		BroadcastToNeighbor(cellIndex, leave, uid);
+		var bytes = MemoryPackSerializer.Serialize<Packet>(new LeaveZoneNtf { Uids = [uid] });
+		var leaveNtf = PacketSession.MakePacket(bytes);
+
+		foreach (int otherUid in player.View)
+		{
+			if (_players.TryGetValue(otherUid, out Player? other))
+			{
+				other.View.Remove(uid);
+				Unicast(other.Session, leaveNtf);
+			}
+		}
+
+		player.View.Clear();
 
 		Console.WriteLine($"[Zone] despawn {uid} (players {_players.Count})");
 	}
@@ -361,9 +375,9 @@ public class Zone
 			p.X = Math.Clamp(p.X + dx * MapConst.Speed * dt, MapConst.Min, MapConst.Max);
 			p.Y = Math.Clamp(p.Y + dy * MapConst.Speed * dt, MapConst.Min, MapConst.Max);
 
-			if (_grid.TryUpdateCell(p, out var oldCellIndex))
+			if (_grid.TryUpdateCell(p))
 			{
-				_transitions.Add((p, oldCellIndex));
+				_transitions.Add(p);
 			}
 
 			_dirtyCells.Add(p.CellIndex);
@@ -371,9 +385,9 @@ public class Zone
 		}
 
 
-		foreach ((Player p, int oldCellIdx) in _transitions)
+		foreach (Player p in _transitions)
 		{
-			HandleTransition(p, oldCellIdx);
+			UpdateView(p);
 		}
 
 		foreach (var idx in _dirtyCells)
@@ -383,38 +397,58 @@ public class Zone
 		}
 	}
 
-	private void HandleTransition(Player mover, int oldCellIdx)
+	private void UpdateView(Player mover)
 	{
-		// 새이웃
-		CollectCellDiff(mover.CellIndex, oldCellIdx, mover.Uid, _enterTmp);
-		NotifyEnter(mover, _enterTmp);
+		_grid.CollectNeighborPlayers(mover.CellIndex, _viewTmp);
 
-		// 옛이웃
-		CollectCellDiff(oldCellIdx, mover.CellIndex, mover.Uid, _leaveTmp);
-		NotifyLeave(mover, _leaveTmp);
-	}
-
-	private void CollectCellDiff(int cellIndex, int otherCellIndex, int excludeUid, List<Player> results)
-	{
-		results.Clear();
-
-		foreach (int neighbor in _grid.GetNeighbors(cellIndex))
+		_viewUids.Clear();
+		foreach (Player p in _viewTmp)
 		{
-			if (_grid.IsNeighbor(otherCellIndex, neighbor))
+			if (p.Uid != mover.Uid)
+			{
+				_viewUids.Add(p.Uid);
+			}
+		}
+
+		_enterTmp.Clear();
+		foreach (Player p in _viewTmp)
+		{
+			if (p.Uid == mover.Uid)
 			{
 				continue;
 			}
 
-			foreach (Player p in _grid.GetPlayers(neighbor))
+			// 새로 등장
+			if (!mover.View.Contains(p.Uid))
 			{
-				if (p.Uid == excludeUid)
-				{
-					continue;
-				}
-
-				results.Add(p);
+				_enterTmp.Add(p);
 			}
 		}
+
+		_leaveTmp.Clear();
+		foreach (int uid in mover.View)
+		{
+			// 이제 못봄
+			if (!_viewUids.Contains(uid) && _players.TryGetValue(uid, out Player? p))
+			{
+				_leaveTmp.Add(p);
+			}
+		}
+
+		foreach (Player p in _enterTmp)
+		{
+			mover.View.Add(p.Uid);
+			p.View.Add(mover.Uid);
+		}
+
+		foreach (Player p in _leaveTmp)
+		{
+			mover.View.Remove(p.Uid);
+			p.View.Remove(mover.Uid);
+		}
+
+		NotifyEnter(mover, _enterTmp);
+		NotifyLeave(mover, _leaveTmp);
 	}
 
 	private void NotifyEnter(Player mover, List<Player> others)
