@@ -45,7 +45,7 @@ public static class PacketHandler
 
 		int uid = session.Uid;
 		MoveFlag flags = req.Flags;
-		zone.Push(() => zone.SetMove(uid, flags));
+		zone.PushMove(uid, flags);
 	}
 
 	private static void HandlePing(GameSession session, Ping ping)
@@ -59,7 +59,7 @@ public static class PacketHandler
 			return;
 		}
 
-		zone.Push(() => Send(session, new Pong { Tick = tick }));
+		zone.PushPong(session, tick);
 	}
 
 	private static void HandleLoginReq(GameSession session, LoginReq req)
@@ -109,7 +109,7 @@ public static class PacketHandler
 
 		int uid = session.Uid;
 		string name = session.Name;
-		zone.Push(() => zone.Spawn(uid, name, session));
+		zone.PushSpawn(uid, name, session);
 	}
 
 	private static void Send(GameSession session, Packet packet)

@@ -37,7 +37,7 @@ public class GameSession : PacketSession
 		}
 
 		int uid = Uid;
-		zone.Push(() => zone.Despawn(uid));
+		zone.PushDespawn(uid);
 		LeaveZone();
 	}
 

@@ -9,7 +9,26 @@ namespace TestServer;
 
 public class Zone
 {
-	private readonly ConcurrentQueue<Action> _jobs = new();
+	private enum CommandType
+	{
+		None,
+		Move,
+		Spawn,
+		Despawn,
+		Pong,
+	}
+
+	private struct Command
+	{
+		public CommandType Type;
+		public int Uid;
+		public MoveFlag Flags;
+		public string? Name;
+		public ISender? Sender;
+		public long Tick;
+	}
+
+	private readonly ConcurrentQueue<Command> _commands = new();
 
 	private readonly Dictionary<int, Player> _players = new();
 	private readonly ZoneGrid _grid;
@@ -63,9 +82,24 @@ public class Zone
 		_running = false;
 	}
 
-	public void Push(Action job)
+	public void PushMove(int uid, MoveFlag flags)
 	{
-		_jobs.Enqueue(job);
+		_commands.Enqueue(new Command { Type = CommandType.Move, Uid = uid, Flags = flags });
+	}
+
+	public void PushSpawn(int uid, string name, ISender sender)
+	{
+		_commands.Enqueue(new Command { Type = CommandType.Spawn, Uid = uid, Name = name, Sender = sender });
+	}
+
+	public void PushDespawn(int uid)
+	{
+		_commands.Enqueue(new Command { Type = CommandType.Despawn, Uid = uid });
+	}
+
+	public void PushPong(ISender sender, long tick)
+	{
+		_commands.Enqueue(new Command { Type = CommandType.Pong, Sender = sender, Tick = tick });
 	}
 
 	[Conditional("DEBUG")]
@@ -74,7 +108,7 @@ public class Zone
 		Debug.Assert(Thread.CurrentThread == _thread, "Zone 처리는 Zone 스레드에서.");
 	}
 
-	public void SetMove(int uid, MoveFlag flags)
+	private void SetMove(int uid, MoveFlag flags)
 	{
 		AssertZoneThread();
 
@@ -84,7 +118,7 @@ public class Zone
 		}
 	}
 
-	public void Spawn(int uid, string name, ISender session)
+	private void Spawn(int uid, string name, ISender session)
 	{
 		AssertZoneThread();
 
@@ -132,7 +166,7 @@ public class Zone
 		Console.WriteLine($"[Zone] spawn {uid}({name}) (players {_players.Count})");
 	}
 
-	public void Despawn(int uid)
+	private void Despawn(int uid)
 	{
 		AssertZoneThread();
 
@@ -256,20 +290,44 @@ public class Zone
 	{
 		long allocStart = GC.GetAllocatedBytesForCurrentThread();
 
-		ProcessJobs();
+		ProcessCommands();
 		Update();
 
 		_metrics.OnTick(GC.GetAllocatedBytesForCurrentThread() - allocStart);
 		_metrics.Report(_players.Count);
 	}
 
-	private void ProcessJobs()
+	private void ProcessCommands()
 	{
-		while (_jobs.TryDequeue(out Action? job))
+		while (_commands.TryDequeue(out var cmd))
 		{
 			try
 			{
-				job();
+				switch (cmd.Type)
+				{
+					case CommandType.Move:
+						SetMove(cmd.Uid, cmd.Flags);
+						break;
+					case CommandType.Spawn:
+						if (cmd.Sender is not null)
+						{
+							Spawn(cmd.Uid, cmd.Name!, cmd.Sender);
+						}
+						break;
+					case CommandType.Despawn:
+						Despawn(cmd.Uid);
+						break;
+					case CommandType.Pong:
+						if (cmd.Sender is not null)
+						{
+							Unicast(cmd.Sender, new Pong { Tick = cmd.Tick });
+						}
+						break;
+					default:
+						// log
+						continue;
+				}
+
 				_metrics.OnJob();
 			}
 			catch
