@@ -1,7 +1,9 @@
 ﻿using System.Buffers;
+using System.Diagnostics;
 using System.IO.Pipelines;
 using System.Net;
 using System.Net.Sockets;
+using System.Runtime.InteropServices;
 using System.Threading.Channels;
 
 namespace Core.Network;
@@ -13,8 +15,7 @@ public abstract class Session
 	private int _disconnected = 0;
 
 	// send
-	private readonly Channel<ReadOnlyMemory<byte>> _sendChannel = Channel.CreateUnbounded<ReadOnlyMemory<byte>>(new UnboundedChannelOptions { SingleReader = true });
-	//private readonly List<ArraySegment<byte>> _pending = new();
+	private readonly Channel<ArraySegment<byte>> _sendChannel = Channel.CreateUnbounded<ArraySegment<byte>>(new UnboundedChannelOptions { SingleReader = true });
 
 	protected abstract int OnRecv(ReadOnlySequence<byte> data);
 	protected abstract void OnConnected();
@@ -53,7 +54,15 @@ public abstract class Session
 
 	protected void Send(ReadOnlyMemory<byte> data)
 	{
-		_sendChannel.Writer.TryWrite(data);
+		if (MemoryMarshal.TryGetArray(data, out ArraySegment<byte> buf))
+		{
+			_sendChannel.Writer.TryWrite(buf);
+		}
+		else
+		{
+			// log
+			//Debug.Assert(false);
+		}
 	}
 
 	private async Task RunAsync()
@@ -139,38 +148,33 @@ public abstract class Session
 
 	private async Task ProcessSendAsync()
 	{
+		List<ArraySegment<byte>> list = new();
+		var reader = _sendChannel.Reader;
+
 		try
 		{
-			await foreach(var data in _sendChannel.Reader.ReadAllAsync())
+			while (await reader.WaitToReadAsync())
 			{
-				await SendSingleAsync(data);
-			}
+				list.Clear();
 
-			//while (await _sendChannel.Reader.WaitToReadAsync())
-			//{
-			//	while (_sendChannel.Reader.TryRead(out var more))
-			//	{
-			//	}
-			//}
+				while (reader.TryRead(out var buf))
+				{
+					list.Add(buf);
+				}
+
+				if (list.Count == 1)
+				{
+					await _socket.SendAsync(list[0], SocketFlags.None);
+				}
+				else
+				{
+					await _socket.SendAsync(list, SocketFlags.None);
+				}
+			}
 		}
 		catch
 		{
 			// log
-		}
-	}
-
-	private async Task SendSingleAsync(ReadOnlyMemory<byte> data)
-	{
-		int totalSent = 0;
-		while (totalSent < data.Length)
-		{
-			int sent = await _socket.SendAsync(data[totalSent..], SocketFlags.None);
-			if (sent == 0)
-			{
-				return;
-			}
-
-			totalSent += sent;
 		}
 	}
 
