@@ -1,17 +1,26 @@
 ﻿using System.Net;
+using Microsoft.Extensions.Configuration;
 using Core.Network;
 
 namespace TestDummy;
 
 internal class Program
 {
-	private static async Task Main(string[] args)
+	private sealed class Config
 	{
-		int connections = args.Length > 0 ? int.Parse(args[0]) : 100;
-		int pingsPerSecond = args.Length > 1 ? int.Parse(args[1]) : 1;
-		int port = args.Length > 2 ? int.Parse(args[2]) : 7777;
+		public string Host { get; set; } = "127.0.0.1";
+		public int Port { get; set; } = 7777;
+		public int Connections { get; set; } = 100;
+		public int PingsPerSecond { get; set; } = 1;
+	}
 
-		var endPoint = new IPEndPoint(IPAddress.Loopback, port);
+	private static async Task Main()
+	{
+		Config config = LoadConfig();
+		int connections = config.Connections;
+		int pingsPerSecond = config.PingsPerSecond;
+
+		var endPoint = new IPEndPoint(IPAddress.Parse(config.Host), config.Port);
 		var client = new ClientService();
 
 		Console.WriteLine($"[Dummy] connecting {connections} sessions -> {endPoint} ({pingsPerSecond} ping/s each)");
@@ -75,5 +84,22 @@ internal class Program
 			Console.WriteLine($"[Dummy] moveNtf/s={moveNtf - lastMoveNtf} (total={moveNtf})");
 			lastMoveNtf = moveNtf;
 		}
+	}
+
+	private static Config LoadConfig()
+	{
+		IConfiguration configuration = new ConfigurationBuilder()
+			.SetBasePath(AppContext.BaseDirectory)
+			.AddJsonFile("appsettings.json", optional: true, reloadOnChange: false)
+			.Build();
+
+		Config? config = configuration.Get<Config>();
+		if (config is null)
+		{
+			Console.WriteLine("[Config][WARN] appsettings.json 없음 — 기본값 사용");
+			config = new Config();
+		}
+
+		return config;
 	}
 }

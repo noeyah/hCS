@@ -1,14 +1,20 @@
 ﻿using System.Net;
+using Microsoft.Extensions.Configuration;
 using Core.Network;
 
 namespace TestServer;
 
 internal class Program
 {
-	private static void Main(string[] args)
+	private sealed class Config
 	{
-		int port = args.Length > 0 ? int.Parse(args[0]) : 7777;
-		var endPoint = new IPEndPoint(IPAddress.Any, port);
+		public int Port { get; set; } = 7777;
+	}
+
+	private static void Main()
+	{
+		Config config = LoadConfig();
+		var endPoint = new IPEndPoint(IPAddress.Any, config.Port);
 
 		var world = new World(tickHz: 20);
 		world.Start();
@@ -27,5 +33,22 @@ internal class Program
 			Console.WriteLine("Press Enter to exit.");
 			Console.ReadLine();
 		}
+	}
+
+	private static Config LoadConfig()
+	{
+		IConfiguration configuration = new ConfigurationBuilder()
+			.SetBasePath(AppContext.BaseDirectory)
+			.AddJsonFile("appsettings.json", optional: true, reloadOnChange: false)
+			.Build();
+
+		Config? config = configuration.Get<Config>();
+		if (config is null)
+		{
+			Console.WriteLine("[Config][WARN] appsettings.json 없음 — 기본값 사용");
+			config = new Config();
+		}
+
+		return config;
 	}
 }
