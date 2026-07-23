@@ -18,7 +18,7 @@ dotnet_style_require_accessibility_modifiers = always:warning
 # 중괄호는 본문이 한 줄이어도 항상
 csharp_prefer_braces = true:warning
 
-# Allman
+# 여는 중괄호는 새 줄에서
 csharp_new_line_before_open_brace = all
 csharp_new_line_before_else = true
 csharp_new_line_before_catch = true
@@ -27,7 +27,30 @@ csharp_new_line_before_members_in_object_initializers = true
 csharp_new_line_before_members_in_anonymous_types = true
 csharp_new_line_between_query_expression_clauses = true
 
-# 필드 네이밍: private/internal 필드는 _camelCase
+# const : PascalCase
+dotnet_naming_rule.const_fields_pascal.symbols = const_fields
+dotnet_naming_rule.const_fields_pascal.style = pascal_case
+dotnet_naming_rule.const_fields_pascal.severity = warning
+
+dotnet_naming_symbols.const_fields.applicable_kinds = field
+dotnet_naming_symbols.const_fields.applicable_accessibilities = private, internal
+dotnet_naming_symbols.const_fields.required_modifiers = const
+
+dotnet_naming_style.pascal_case.capitalization = pascal_case
+
+# static / static readonly : s_camelCase
+dotnet_naming_rule.static_fields_prefix.symbols = static_fields
+dotnet_naming_rule.static_fields_prefix.style = s_camel_case
+dotnet_naming_rule.static_fields_prefix.severity = warning
+
+dotnet_naming_symbols.static_fields.applicable_kinds = field
+dotnet_naming_symbols.static_fields.applicable_accessibilities = private, internal
+dotnet_naming_symbols.static_fields.required_modifiers = static
+
+dotnet_naming_style.s_camel_case.capitalization = camel_case
+dotnet_naming_style.s_camel_case.required_prefix = s_
+
+# private : _camelCase
 dotnet_naming_rule.private_fields_underscore.symbols = private_fields
 dotnet_naming_rule.private_fields_underscore.style = underscore_camel_case
 dotnet_naming_rule.private_fields_underscore.severity = warning
