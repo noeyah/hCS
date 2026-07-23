@@ -17,13 +17,13 @@ public partial class EnterZoneRes : Response
 [MemoryPackable]
 public partial class EnterZoneNtf : Packet
 {
-	public PlayerInfo[] Players { get; set; } = [];
+	public EnterInfo[] Enters { get; set; } = [];
 }
 
 [MemoryPackable]
 public partial class LeaveZoneNtf : Packet
 {
-	public int[] Uids { get; set; } = [];
+	public int[] Leaves { get; set; } = [];
 }
 
 [MemoryPackable]

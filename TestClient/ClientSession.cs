@@ -54,14 +54,14 @@ public class ClientSession : PacketSession
 				break;
 
 			case EnterZoneNtf enterNtf:
-				foreach (PlayerInfo p in enterNtf.Players)
+				foreach (EnterInfo info in enterNtf.Enters)
 				{
-					Players[p.Uid] = new PointF(p.X, p.Y);
+					Players[info.Uid] = new PointF(info.X, info.Y);
 				}
 				break;
 
 			case LeaveZoneNtf leaveNtf:
-				foreach (int uid in leaveNtf.Uids)
+				foreach (int uid in leaveNtf.Leaves)
 				{
 					Players.TryRemove(uid, out _);
 				}

@@ -148,24 +148,24 @@ public class Zone
 		_grid.CollectNeighborPlayers(_grid.ToIndex(player.X, player.Y), _spawnTmp);
 		if (_spawnTmp.Count > 0)
 		{
-			var infos = new PlayerInfo[_spawnTmp.Count];
+			var infos = new EnterInfo[_spawnTmp.Count];
 			int i = 0;
 
 			foreach (Player p in _spawnTmp)
 			{
-				infos[i++] = ToInfo(p);
+				infos[i++] = ToEnterInfo(p);
 				player.View.Add(p.Uid);
 				p.View.Add(player.Uid);
 			}
 
-			var listNtf = new EnterZoneNtf { Players = infos };
+			var listNtf = new EnterZoneNtf { Enters = infos };
 			Unicast(player.Session, listNtf);
 		}
 
 		_grid.Add(player);
 		_players[uid] = player;
 
-		var spawnNtf = new EnterZoneNtf { Players = [ToInfo(player)] };
+		var spawnNtf = new EnterZoneNtf { Enters = [ToEnterInfo(player)] };
 		BroadcastToNeighbor(player.CellIndex, spawnNtf, uid);
 
 		Console.WriteLine($"[Zone] spawn {uid}({name}) (players {_players.Count})");
@@ -183,7 +183,7 @@ public class Zone
 		_players.Remove(uid);
 		_grid.Remove(player);
 
-		var bytes = MemoryPackSerializer.Serialize<Packet>(new LeaveZoneNtf { Uids = [uid] });
+		var bytes = MemoryPackSerializer.Serialize<Packet>(new LeaveZoneNtf { Leaves = [uid] });
 		var leaveNtf = PacketSession.MakePacket(bytes);
 
 		foreach (int otherUid in player.View)
@@ -252,9 +252,9 @@ public class Zone
 		}
 	}
 
-	private static PlayerInfo ToInfo(Player p)
+	private static EnterInfo ToEnterInfo(Player p)
 	{
-		return new PlayerInfo { Uid = p.Uid, Name = p.Name, X = p.X, Y = p.Y };
+		return new EnterInfo { Uid = p.Uid, Name = p.Name, X = p.X, Y = p.Y };
 	}
 
 	private static (float x, float y) ToDir(MoveFlag f)
@@ -458,15 +458,15 @@ public class Zone
 			return;
 		}
 
-		var infos = new PlayerInfo[others.Count];
+		var infos = new EnterInfo[others.Count];
 		int i = 0;
 		foreach (Player p in others)
 		{
-			infos[i++] = ToInfo(p);
+			infos[i++] = ToEnterInfo(p);
 		}
-		Unicast(mover.Session, new EnterZoneNtf { Players = infos });
+		Unicast(mover.Session, new EnterZoneNtf { Enters = infos });
 
-		var moverNtf = new EnterZoneNtf { Players = [ToInfo(mover)] };
+		var moverNtf = new EnterZoneNtf { Enters = [ToEnterInfo(mover)] };
 		var bytes = MemoryPackSerializer.Serialize<Packet>(moverNtf);
 		var packet = PacketSession.MakePacket(bytes);
 		foreach (Player p in others)
@@ -488,9 +488,9 @@ public class Zone
 		{
 			uids[i++] = p.Uid;
 		}
-		Unicast(mover.Session, new LeaveZoneNtf { Uids = uids });
+		Unicast(mover.Session, new LeaveZoneNtf { Leaves = uids });
 
-		var moverNtf = new LeaveZoneNtf { Uids = [mover.Uid] };
+		var moverNtf = new LeaveZoneNtf { Leaves = [mover.Uid] };
 		var bytes = MemoryPackSerializer.Serialize<Packet>(moverNtf);
 		var packet = PacketSession.MakePacket(bytes);
 		foreach (Player p in others)

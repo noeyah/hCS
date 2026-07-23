@@ -3,7 +3,7 @@
 namespace Shared;
 
 [MemoryPackable]
-public partial struct PlayerInfo
+public partial struct EnterInfo
 {
 	public int Uid { get; set; }
 	public string? Name { get; set; }
