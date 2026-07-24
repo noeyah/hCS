@@ -4,7 +4,7 @@ System.IO.Pipelines 기반 C# 실시간 게임 서버 - 네트워크 계층부�
 
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/ffbf1339-7616-40e9-81e5-f439820f971b" width="416" alt="hCS 데모 — 윈폼 클라이언트가 자기 시야(3×3 셀)만 렌더">
+  <img src="https://github.com/user-attachments/assets/d826c3fb-aabe-41ae-8717-4f237dcd32f3" width="416" alt="hCS 데모 — 윈폼 클라이언트가 자기 시야(3×3 셀)만 렌더">
 </p>
 
 ## 특징
