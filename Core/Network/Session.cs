@@ -1,9 +1,7 @@
 ﻿using System.Buffers;
-using System.Diagnostics;
 using System.IO.Pipelines;
 using System.Net;
 using System.Net.Sockets;
-using System.Runtime.InteropServices;
 using System.Threading.Channels;
 
 namespace Core.Network;
@@ -15,7 +13,7 @@ public abstract class Session
 	private int _disconnected = 0;
 
 	// send
-	private readonly Channel<ArraySegment<byte>> _sendChannel = Channel.CreateUnbounded<ArraySegment<byte>>(new UnboundedChannelOptions { SingleReader = true });
+	private readonly Channel<ReadOnlyMemory<byte>> _sendChannel = Channel.CreateUnbounded<ReadOnlyMemory<byte>>(new UnboundedChannelOptions { SingleReader = true });
 
 	protected abstract int OnRecv(ReadOnlySequence<byte> data);
 	protected abstract void OnConnected();
@@ -54,15 +52,7 @@ public abstract class Session
 
 	protected void Send(ReadOnlyMemory<byte> data)
 	{
-		if (MemoryMarshal.TryGetArray(data, out ArraySegment<byte> buf))
-		{
-			_sendChannel.Writer.TryWrite(buf);
-		}
-		else
-		{
-			// log
-			//Debug.Assert(false);
-		}
+		_sendChannel.Writer.TryWrite(data);
 	}
 
 	private async Task RunAsync()
@@ -148,28 +138,11 @@ public abstract class Session
 
 	private async Task ProcessSendAsync()
 	{
-		List<ArraySegment<byte>> list = new();
-		var reader = _sendChannel.Reader;
-
 		try
 		{
-			while (await reader.WaitToReadAsync())
+			await foreach(var data in _sendChannel.Reader.ReadAllAsync())
 			{
-				list.Clear();
-
-				while (reader.TryRead(out var buf))
-				{
-					list.Add(buf);
-				}
-
-				if (list.Count == 1)
-				{
-					await _socket.SendAsync(list[0], SocketFlags.None);
-				}
-				else
-				{
-					await _socket.SendAsync(list, SocketFlags.None);
-				}
+				await _socket.SendAsync(data, SocketFlags.None);
 			}
 		}
 		catch
@@ -177,5 +150,4 @@ public abstract class Session
 			// log
 		}
 	}
-
 }
