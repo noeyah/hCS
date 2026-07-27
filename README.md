@@ -7,6 +7,9 @@ System.IO.Pipelines 기반 C# 실시간 게임 서버 - 네트워크 계층부�
   <img src="https://github.com/user-attachments/assets/d826c3fb-aabe-41ae-8717-4f237dcd32f3" width="416" alt="hCS 데모 — 윈폼 클라이언트가 자기 시야(3×3 셀)만 렌더">
 </p>
 
+## 기술 스택
+.NET10, MemoryPack, WinForms
+
 ## 특징
 - Socket + System.IO.Pipelines 커스텀 네트워크 계층
 - IO ↔ Zone 스레드 분리 (Zone 단일 스레드 + 커맨드큐 → Zone 로직 락 프리)
@@ -37,8 +40,3 @@ dotnet run --project TestClient -c Release
 dotnet run --project TestDummy -c Release
 ```
 > 호스트/포트/커넥션 수 등 설정값은 각 프로젝트의 `appsettings.json`에서 조정 가능.
-
-## 기술 스택
-.NET10, MemoryPack, WinForms
-
-
