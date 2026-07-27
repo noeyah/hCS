@@ -2,6 +2,7 @@
 using System.IO.Pipelines;
 using System.Net;
 using System.Net.Sockets;
+using System.Runtime.CompilerServices;
 using System.Threading.Channels;
 
 namespace Core.Network;
@@ -59,10 +60,10 @@ public abstract class Session
 	{
 		var pipe = new Pipe();
 
-		Task send = ProcessSendAsync();
+		Task send = SendLoopAsync();
 
-		Task recv = ProcessRecvAsync(pipe.Writer);
-		Task read = ProcessReadAsync(pipe.Reader);
+		Task recv = RecvLoopAsync(pipe.Writer);
+		Task read = ReadLoopAsync(pipe.Reader);
 
 		await Task.WhenAll(recv, read);
 		Disconnect();
@@ -70,9 +71,8 @@ public abstract class Session
 		await send;
 	}
 
-	private async Task ProcessRecvAsync(PipeWriter writer)
+	private async Task RecvLoopAsync(PipeWriter writer)
 	{
-		// TODO. 밖으로 빼기
 		const int MinBufferSize = 4096;
 
 		try
@@ -96,9 +96,13 @@ public abstract class Session
 				}
 			}
 		}
-		catch
+		catch (Exception e) when (IsDisconnect(e))
 		{
-			// log
+			// 정상 종료
+		}
+		catch (Exception e)
+		{
+			LogError(e);
 		}
 		finally
 		{
@@ -106,7 +110,7 @@ public abstract class Session
 		}
 	}
 
-	private async Task ProcessReadAsync(PipeReader reader)
+	private async Task ReadLoopAsync(PipeReader reader)
 	{
 		try
 		{
@@ -126,9 +130,13 @@ public abstract class Session
 				}
 			}
 		}
-		catch
+		catch (Exception e) when (IsDisconnect(e))
 		{
-			// log
+			// 정상 종료
+		}
+		catch (Exception e)
+		{
+			LogError(e);
 		}
 		finally
 		{
@@ -136,7 +144,7 @@ public abstract class Session
 		}
 	}
 
-	private async Task ProcessSendAsync()
+	private async Task SendLoopAsync()
 	{
 		try
 		{
@@ -145,9 +153,31 @@ public abstract class Session
 				await _socket.SendAsync(data, SocketFlags.None);
 			}
 		}
-		catch
+		catch (Exception e) when (IsDisconnect(e))
 		{
-			// log
+			// 정상 종료
 		}
+		catch (Exception e)
+		{
+			LogError(e);
+		}
+	}
+
+	private static bool IsDisconnect(Exception e)
+	{
+		if (e is SocketException se)
+		{
+			return se.SocketErrorCode is SocketError.ConnectionReset
+				or SocketError.ConnectionAborted
+				or SocketError.OperationAborted;
+		}
+
+		return e is ObjectDisposedException or OperationCanceledException;
+	}
+
+
+	private static void LogError(Exception e, [CallerMemberName] string caller = "",  [CallerLineNumber] int line = 0)
+	{
+		Console.WriteLine($"[Session.{caller}:{line}] {e}");
 	}
 }

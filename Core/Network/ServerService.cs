@@ -30,9 +30,9 @@ public class ServerService
 				Session session = _sessionFactory();
 				session.Start(clientSocket);
 			}
-			catch
+			catch (Exception e)
 			{
-				// log
+				Console.WriteLine($"[ServerService] {e}");
 			}
 		}
 	}

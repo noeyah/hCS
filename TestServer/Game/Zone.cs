@@ -338,15 +338,15 @@ public class Zone
 						}
 						break;
 					default:
-						// log
+						Console.WriteLine($"[Zone] 알 수 없는 커맨드 : {cmd.Type}");
 						continue;
 				}
 
 				_metrics.OnJob();
 			}
-			catch
+			catch (Exception e)
 			{
-				// log
+				Console.WriteLine($"[Zone] 커맨드 처리 실패 Type({cmd.Type}), uid({cmd.Uid}): {e}");
 			}
 		}
 	}
