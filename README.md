@@ -1,6 +1,6 @@
 # hCS
 
-System.IO.Pipelines 기반 C# 실시간 게임 서버 - 네트워크 계층부터 AOI, 부하 측정까지 구현.
+C# 실시간 게임 서버 - 네트워크 계층부터 AOI, 부하 측정까지 구현.
 
 
 <p align="center">
@@ -8,7 +8,9 @@ System.IO.Pipelines 기반 C# 실시간 게임 서버 - 네트워크 계층부�
 </p>
 
 ## 기술 스택
-.NET10, MemoryPack, WinForms
+- C#(.NET10)
+- MemoryPack
+- WinForms
 
 ## 특징
 - Socket + System.IO.Pipelines 커스텀 네트워크 계층
@@ -22,7 +24,7 @@ System.IO.Pipelines 기반 C# 실시간 게임 서버 - 네트워크 계층부�
 |---|---|---|---|
 | 틱당 할당 | 10.5MB | 0.70MB | 송신 버퍼를 수신자끼리 공유 (15배↓) |
 | Gen2 GC | 12회 | 0회 | AOI 도입으로 브로드캐스트 축소 |
-- 3,000 커넥션 이동 처리 중에도 틱 20~21Hz 유지 · 애플리케이션 유실 0
+- 3,000 커넥션 이동 처리 중에도 틱 20~21Hz 유지. 애플리케이션 유실 0
 
 
 ## 실행
