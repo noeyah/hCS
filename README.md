@@ -2,8 +2,9 @@
 
 C# 실시간 게임 서버 - 네트워크 계층부터 AOI, 부하 측정까지 구현.
 
-> 🔗 다른 프로젝트<br>
-> **[hCPP](https://github.com/noeyah/hCPP)** - C++ IOCP 서버 라이브러리 + C# 네트워크 라이브러리
+> 🔗 다른 프로젝트 : **[hCPP](https://github.com/noeyah/hCPP)**<br>
+> C++ IOCP 서버 라이브러리 + C# 네트워크 라이브러리<br>
+> 라이브러리 설계 및 구현은 AI 없이 직접 작성
 
 
 <p align="center">
